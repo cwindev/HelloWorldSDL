@@ -3,6 +3,10 @@
 #include "sdlcommon.h"
 #include "kbd.h"
 
+#define WINDOW_WIDTH  800
+#define WINDOW_HEIGHT 600
+#define WINDOW_TITLE  "Hello World"
+
 SDL_Window    *_window;
 SDL_Renderer  *_renderer;
 TTF_Font      *_monoFont;
@@ -19,6 +23,7 @@ Uint32 thisTime;
 Uint32 lastTime;
 
 int *create_text_texture(SDL_Renderer *renderer, const char *s, TTF_Font *font, SDL_Color fgColor, struct sprite_s *sprite);
+TTF_Font *loadFont(const char *filename, int size);
 
 float posX;
 float posY;
@@ -46,11 +51,11 @@ int main(int argc, char *argv[]) {
 	}
 
 	_window = SDL_CreateWindow(
-		"Hello World",
+		WINDOW_TITLE,
 		SDL_WINDOWPOS_CENTERED,
 		SDL_WINDOWPOS_CENTERED,
-		800,
-		600,
+		WINDOW_WIDTH,
+		WINDOW_HEIGHT,
 		0);
 	if (_window == NULL) {
 		fprintf(stderr, "error: Unable to create window: %s\n", SDL_GetError());
@@ -85,15 +90,17 @@ int main(int argc, char *argv[]) {
 
 int *create_text_texture(SDL_Renderer *renderer, const char *s, TTF_Font *font, SDL_Color fgColor, struct sprite_s *sprite) {
 
-	SDL_Surface *surface = TTF_RenderText_Solid(
-													font, 
-													s, 
-													fgColor);
+	SDL_Surface *surface = TTF_RenderText_Blended(
+		font,
+		s,
+		fgColor);
+
 	sprite->texture = SDL_CreateTextureFromSurface(renderer, surface);
 	SDL_FreeSurface(surface);
 
 	sprite->x = 0;
 	sprite->y = 0;
+
 	TTF_SizeText(
 		font,
 		s,
@@ -152,15 +159,22 @@ static void update() {
 // load assets
 static void load() {
 
-	_monoFont = TTF_OpenFont("C:\\Windows\\Fonts\\Consola.ttf", 14);
-	if (_monoFont == NULL) {
-		// failed to load font
-		fprintf(stderr, "error: Unable to load font: %s\n", TTF_GetError());
-		// TODO: return fail code?
-	}
-
 	SDL_Color white = { 0xFF, 0xFF, 0xFF };
 
-	create_text_texture(_renderer, "Hello World", _monoFont, white, &_text_sprite);
+	_monoFont = loadFont("..\\assets\\fonts\\LiberationMono-Regular.ttf", 14);
 
+	create_text_texture(
+		_renderer, 
+		"Hello World", 
+		_monoFont, 
+		white, 
+		&_text_sprite);
+}
+
+
+TTF_Font *loadFont(const char *filename, int size) {
+	TTF_Font * f = TTF_OpenFont(filename, size);
+	if (!f)
+		fprintf(stderr, "error: Unable to load font: %s\n", TTF_GetError());
+	return f;
 }
