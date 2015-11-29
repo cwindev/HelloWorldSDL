@@ -1,11 +1,7 @@
 
 #include <stdio.h>
-#include <sdl\SDL.h>
-#include <sdl\SDL_ttf.h>
-
-#pragma comment(lib, "SDL2.lib")
-#pragma comment(lib, "SDL2Main.lib")
-#pragma comment(lib, "SDL2_TTF.lib")
+#include "sdlcommon.h"
+#include "kbd.h"
 
 SDL_Window    *_window;
 SDL_Renderer  *_renderer;
@@ -16,7 +12,16 @@ static void load(); // loads assets
 static void draw();
 static void update();
 
+const float SPEED = 250.f;
+
+float deltaTime;
+Uint32 thisTime;
+Uint32 lastTime;
+
 int *create_text_texture(SDL_Renderer *renderer, const char *s, TTF_Font *font, SDL_Color fgColor, struct sprite_s *sprite);
+
+float posX;
+float posY;
 
 struct sprite_s {
 	int x;
@@ -61,6 +66,9 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 
+	posY = posX = 0;
+
+	kbd_init();
 	load();
 
 	while (_run != 0) {
@@ -68,6 +76,7 @@ int main(int argc, char *argv[]) {
 		update();
 	}
 
+	kbd_quit();
 	TTF_Quit();
 	SDL_Quit();
 
@@ -100,32 +109,42 @@ static void draw() {
 	SDL_RenderClear(_renderer);
 
 	SDL_Rect dst = {
-		_text_sprite.x,
-		_text_sprite.y,
+		(int)posX,
+		(int)posY,
 		_text_sprite.w,
 		_text_sprite.h
 	};
 
 	SDL_RenderCopy(_renderer, _text_sprite.texture, NULL, &dst);
-
 	SDL_RenderPresent(_renderer);
-
 }
 
 static void update() {
+
+	thisTime = SDL_GetTicks();
+	deltaTime = (float)(thisTime - lastTime) / 1000;
+	lastTime = thisTime;
+
+	kbd_update();
+
+	if (kbd_key_is_down(SDL_SCANCODE_W)) {
+		posY -= SPEED * deltaTime;
+	}
+	else if (kbd_key_is_down(SDL_SCANCODE_S)) {
+		posY += SPEED * deltaTime;
+	}
+
+	if (kbd_key_is_down(SDL_SCANCODE_A)) {
+		posX -= SPEED * deltaTime;
+	}
+	else if (kbd_key_is_down(SDL_SCANCODE_D)) {
+		posX += SPEED * deltaTime;
+	}
 
 	SDL_Event evt;
 	while (SDL_PollEvent(&evt)) {
 		if (evt.type == SDL_QUIT)
 			_run = 0;
-
-		if (evt.type == SDL_KEYDOWN){
-			if (evt.key.keysym.sym == SDLK_w)
-				_text_sprite.y -= 10;
-			if (evt.key.keysym.sym == SDLK_s)
-				_text_sprite.y += 10;
-		}
-
 	}
 
 }
